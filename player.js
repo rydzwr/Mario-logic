@@ -34,8 +34,6 @@ export default class Player {
   update(deltaTime) {
     const go = Game.getInstance().gameObjects;
 
-    console.log(this.pos.x);
-
     for (const object of go) {
       if ("platform" in object) {
         if (
