@@ -6,19 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        * {
+        html, body {
+            width:  100%;
+            height: 100%;
             margin: 0;
-            padding: 0;
         }
     </style>
 </head>
 <body>
     <canvas></canvas>
     
-    <script src="inputManager.js"></script>
-    <script src="platform.js"></script>
-    <script src="player.js"></script>
-    <script src="gameLoop.js"></script>
+    <script type="module">
+        import Game from "/game.js";
+        import InputManager from "/inputManager.js";
+
+        function main() {
+            const input = InputManager.getInstance();
+            const game = Game.getInstance();
+            game.setup();
+            game.gameLoop();
+        }
+
+        main();
+    </script>
 </body>
 </html>
 

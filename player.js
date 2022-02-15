@@ -1,80 +1,93 @@
-class Player {
+import Game from "./game.js";
+import InputManager from "./inputManager.js";
+
+export default class Player {
   constructor() {
-    this.position = {
-      x: 100,
-      y: 100,
-    };
-    this.velocity = {
+    this.gravityAccelY = -0.5;
+    this.dragCoeffX = 60;
+    this.dragCoeffY = 0.1;
+    this.movementForce = 6;
+    this.moveDownForce = 4;
+    this.jumpImpulse = 0.5;
+
+    this.pos = {
       x: 0,
       y: 0,
     };
-    this.width = 30;
-    this.height = 30;
-    this.gravity = 0.5;
+
+    this.v = {
+      x: 0,
+      y: 0,
+    };
+
+    this.a = {
+      x: 0,
+      y: 0,
+    };
+
+    this.dim = {
+      x: 0.02,
+      y: 0.02,
+    };
   }
 
   update(deltaTime) {
-    this.position.y += this.velocity.y;
-    this.position.x += this.velocity.x;
+    const go = Game.getInstance().gameObjects;
 
-    //if (this.position.y + this.height + this.velocity.y <= canvas.height)
-      this.velocity.y += this.gravity;
-    //else this.velocity.y = 0;
+    console.log(this.pos.x);
+
+    for (const object of go) {
+      if ("platform" in object) {
+        if (
+          this.pos.y - this.dim.y >= object.pos.y &&
+          this.pos.y - this.dim.y + this.v.y * deltaTime <= object.pos.y &&
+          this.pos.x + this.dim.x >= object.pos.x &&
+          this.pos.x <= object.pos.x + object.dim.x
+        ) {
+          this.v.y = this.jumpImpulse;
+        }
+      }
+    }
+
+    if (this.pos.x >= 1) {
+      this.pos.x = 0;
+    } else if (this.pos.x <= 0) {
+      this.pos.x = 1;
+    }
+
+    let forceX = 0;
+    let forceY = this.gravityAccelY;
+
+    const input = InputManager.getInstance();
+    if (input.getKey("ArrowRight")) {
+      forceX += this.movementForce;
+    } else if (input.getKey("ArrowLeft")) {
+      forceX -= this.movementForce;
+    }
+
+    if (input.getKey("ArrowDown")) {
+      forceY -= this.moveDownForce;
+    }
+
+    forceX += -Math.sign(this.v.x) * this.dragCoeffX * this.v.x ** 2;
+    forceY += -Math.sign(this.v.y) * this.dragCoeffY * this.v.y ** 2;
+
+    this.a.x = forceX;
+    this.a.y = forceY;
+
+    this.v.x += this.a.x * deltaTime;
+    this.v.y += this.a.y * deltaTime;
+
+    this.pos.x += this.v.x * deltaTime;
+    this.pos.y += this.v.y * deltaTime;
   }
 
-  draw(ctx, info) {
+  draw(ctx) {
     ctx.fillStyle = "red";
-    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+
+    const pos = Game.toScreen(this.pos);
+    const dim = Game.toScreen(this.dim);
+
+    ctx.fillRect(pos.x, pos.y, dim.x, dim.y);
   }
 }
-
-/*player.update()
-
-function animate()
-{
-    requestAnimationFrame(animate)
-    c.clearRect(0, 0, canvas.width, canvas.height)
-    player.update()
-    platform.draw()
-
-    if (keys.right.pressed && player.position.x < 400) 
-    {
-        player.velocity.x = 5
-    }
-    else if (keys.left.pressed && player.position > 100)
-    {
-        player.velocity.x = -5
-    }
-    else if (keys.up.pressed)
-    {
-        player.velocity.y = -5
-    }
-    else if (keys.down.pressed)
-    {
-        player.velocity.y = 5
-    }
-    else
-    {
-        player.velocity.x = 0
-
-        if (keys.right.pressed)
-        {
-            platform.position.x -= 5
-        }
-        else if (keys.left.pressed)
-        {
-            platform.position.x += 5
-        }
-    }
-        
-
-    // Platform collision detection    
-    if  (player.position.y + player.height <= platform.position.y 
-        && player.position.y + player.height + player.velocity.y >= platform.position.y 
-        && player.position.x + player.width >= platform.position.x && player.position.x <= platform.position.x + platform.width)
-    {
-        player.velocity.y = 0
-    }
-}
-
-animate()*/

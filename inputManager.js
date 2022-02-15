@@ -1,5 +1,5 @@
-class InputManager {
-  static setup() {
+export default class InputManager {
+  constructor() {
     this.keyboardState = {};
     document.addEventListener(
       "keydown",
@@ -11,10 +11,15 @@ class InputManager {
     );
   }
 
-  static getKey(code) {
+  getKey(code) {
     if (code in this.keyboardState) return this.keyboardState[code];
     return false;
   }
-}
 
-InputManager.setup();
+  static getInstance() {
+    if (InputManager.instance === undefined) {
+      InputManager.instance = new InputManager();
+    }
+    return InputManager.instance;
+  }
+}

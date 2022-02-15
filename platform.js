@@ -1,21 +1,28 @@
-class Platform
-{
-    constructor(x, y, width, height) {
-        this.position = {
-            x: x,
-            y: y
-        }
+import Game from "./game.js";
 
-        this.width = width;
-        this.height = height;
-    }
+export default class Platform {
+  constructor(x, y, width) {
+    this.platform = true;
 
-    update(deltaTime) {
+    this.pos = {
+      x: x,
+      y: y,
+    };
 
-    }
+    this.dim = {
+      x: width,
+      y: 0.02,
+    };
+  }
 
-    draw(ctx, info) {
-        ctx.fillStyle = 'green'
-        ctx.fillRect(this.position.x, this.position.y, this.width, this.height)
-    }
+  update(deltaTime) {}
+
+  draw(ctx) {
+    ctx.fillStyle = "green";
+
+    const pos = Game.toScreen(this.pos);
+    const dim = Game.toScreen(this.dim);
+
+    ctx.fillRect(pos.x, pos.y, dim.x, dim.y);
+  }
 }
