@@ -1,10 +1,17 @@
 import Game from "./game.js";
 
-export default class Platform {
-  constructor(x, y, width) {
-    // 30% of getting true
-    this.random_boolean = Math.random() < 0.3;
+export const PlatformType = Object.freeze({
+  NORMAL: Symbol("normal"),
+  MOVING: Symbol("moving"),
+  SUPER: Symbol("super"),
+});
+
+export class Platform {
+  constructor(x, y, width, type) {
     this.platform = true;
+    this.movingSpeed = 0.2;
+    this.type = type;
+    this.jumpMultiplier = type === PlatformType.SUPER ? 1.5 : 1;
 
     this.pos = {
       x: x,
@@ -21,52 +28,34 @@ export default class Platform {
       y: 0.02,
     };
 
-    this.moving = {
-      moving: false,
-    };
-
-    this.super = {
-      super: false,
-    };
-
-    this.normal = {
-      normal: true,
-    };
+    if (type === PlatformType.MOVING) {
+      this.v.x = Math.random() < 0.5 ? +this.movingSpeed : -this.movingSpeed;
+    }
   }
 
   update(deltaTime) {
-      this.normal = true;
-    this.moving = this.random_boolean;
-    this.super = this.random_boolean;
-    const go = Game.getInstance().gameObjects;
-    go[1].moving = false;
-    go[1].super = false;
+    this.pos.x += this.v.x * deltaTime;
 
-    if (this.moving === true) {
-      this.pos.x += 0.0015;
-      if (this.pos.x >= 1) {
-        this.pos.x = 0;
-      } else if (this.pos.x <= 0) {
-        this.pos.x = 1;
-      }
+    if (this.pos.x >= 1) {
+      this.pos.x = 0 - this.dim.x;
+    } else if (this.pos.x <= 0 - this.dim.x) {
+      this.pos.x = 1;
     }
   }
 
   draw(ctx) {
-
-    if (this.moving === true || this.super === true) {
-        this.normal = false;
+    if (this.type === PlatformType.NORMAL) {
+      ctx.fillStyle = "green";
+    } else if (this.type === PlatformType.MOVING) {
+      ctx.fillStyle = "black";
+    } else if (this.type === PlatformType.SUPER) {
+      ctx.fillStyle = "yellow";
     }
 
-    if (this.normal === true) {
-        ctx.fillStyle = "green";
-    }else if (this.moving === true) {
-        ctx.fillStyle = "black";
-    }else if (this.super === true) {
-        ctx.fillStyle = "yellow";
-    }
+    const cameraY = Game.getInstance().cameraY;
+    const adjustedY = this.pos.y - cameraY;
 
-    const pos = Game.toScreen(this.pos);
+    const pos = Game.toScreen({ x: this.pos.x, y: adjustedY });
     const dim = Game.toScreen(this.dim);
 
     ctx.fillRect(pos.x, pos.y, dim.x, dim.y);

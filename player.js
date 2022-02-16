@@ -4,11 +4,15 @@ import InputManager from "./inputManager.js";
 export default class Player {
   constructor() {
     this.gravityAccelY = -0.5;
-    this.dragCoeffX = 60;
-    this.dragCoeffY = 0.1;
-    this.movementForce = 6;
-    this.moveDownForce = 4;
-    this.jumpImpulse = 0.5;
+    this.dragCoeffX = 20;
+    this.dragCoeffY = 0.5;
+    this.frictionCoeffX = 0.05;
+    this.movementForce = 4;
+    this.moveDownForce = 2;
+    this.jumpImpulse = 0.55;
+
+    this.applyDownForce = false;
+    this.prevDownInput = false;
 
     this.pos = {
       x: 0,
@@ -42,7 +46,8 @@ export default class Player {
           this.pos.x + this.dim.x >= object.pos.x &&
           this.pos.x <= object.pos.x + object.dim.x
         ) {
-          this.v.y = this.jumpImpulse;
+          this.v.y = this.jumpImpulse * object.jumpMultiplier;
+          this.applyDownForce = false;
         }
       }
     }
@@ -63,12 +68,21 @@ export default class Player {
       forceX -= this.movementForce;
     }
 
-    if (input.getKey("ArrowDown")) {
+    const downPressed = input.getKey("ArrowDown");
+    if (downPressed && !this.prevDownInput) {
+      this.applyDownForce = true;
+    }
+
+    if (this.applyDownForce) {
       forceY -= this.moveDownForce;
     }
+    
+    this.prevDownInput = downPressed;
 
     forceX += -Math.sign(this.v.x) * this.dragCoeffX * this.v.x ** 2;
     forceY += -Math.sign(this.v.y) * this.dragCoeffY * this.v.y ** 2;
+
+    forceX += -Math.sign(this.v.x) * this.frictionCoeffX;
 
     this.a.x = forceX;
     this.a.y = forceY;
@@ -83,7 +97,10 @@ export default class Player {
   draw(ctx) {
     ctx.fillStyle = "red";
 
-    const pos = Game.toScreen(this.pos);
+    const cameraY = Game.getInstance().cameraY;
+    const adjustedY = this.pos.y - cameraY;
+  
+    const pos = Game.toScreen({ x: this.pos.x, y: adjustedY});
     const dim = Game.toScreen(this.dim);
 
     ctx.fillRect(pos.x, pos.y, dim.x, dim.y);

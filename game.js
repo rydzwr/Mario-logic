@@ -1,5 +1,5 @@
+import { PlatformType, Platform } from "./platform.js";
 import Player from "/player.js";
-import Platform from "/platform.js";
 
 export default class Game {
   constructor() {
@@ -9,7 +9,12 @@ export default class Game {
 
     this.screenW = window.innerWidth;
     this.screenH = window.innerHeight;
-    this.cameraY = this.screenH / 2;
+
+    this.cameraY = 1;
+    this.lastGeneratedY = 1;
+    this.cameraMarginY = 0.3;
+
+    this.score = 0;
 
     window.addEventListener(
       "resize",
@@ -31,15 +36,18 @@ export default class Game {
     this.player = new Player();
     this.gameObjects.push(this.player);
 
-    for (let y = -1; y < 0; y += 0.2) {
-      const x = Math.random() * 0.8;
-      const platform = new Platform(x, y, 0.2);
+    for (let y = 1; y >= 0; y -= 0.2) {
+      const type = (y !== 0) ? this.getPlatformType() : PlatformType.NORMAL;
+      const width = (Math.random() * 0.15) + 0.05;
+      const x = Math.random() * (1 - width);
+      const platform = new Platform(x, y, width, type);
       this.gameObjects.push(platform);
     }
 
+    const firstPlatform = this.gameObjects[6];
     this.player.pos = {
-      x: this.gameObjects[1].pos.x + 0.1,
-      y: -0.9,
+      x: firstPlatform.pos.x + firstPlatform.dim.x / 2,
+      y: 0.1,
     };
   }
 
@@ -57,13 +65,51 @@ export default class Game {
   }
 
   update(deltaTime) {
+    const player = this.gameObjects[0];
+    if (player.pos.y > this.cameraY + this.cameraMarginY - 1) {
+      this.cameraY += player.pos.y - (this.cameraY + this.cameraMarginY - 1);
+    }
+
     for (const object of this.gameObjects) {
       object.update(deltaTime);
+    }
+
+    this.generateWorld();
+
+    if (player.pos.y - this.cameraY + 1.1 < 0) {
+      location.reload();
+    }
+  }
+
+  getPlatformType() {
+    const randomVal = Math.random();
+    if (randomVal < 0.3) {
+      return PlatformType.MOVING;
+    } else if (randomVal < 0.4) {
+      return PlatformType.SUPER;
+    } else {
+      return PlatformType.NORMAL;
+    }
+  }
+
+  generateWorld() {
+    if (this.cameraY - this.lastGeneratedY > 0.2) {
+      const type = this.getPlatformType();
+      const width = (Math.random() * 0.15) + 0.05;
+      const x = Math.random() * (1 - width);
+      const y = this.lastGeneratedY + 0.2;
+      const platform = new Platform(x, y, width, type);
+      this.gameObjects.push(platform);
+      this.lastGeneratedY = y;
+      this.score++;
     }
   }
 
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.font = "24px Arial";
+    this.ctx.fillText("Score: " + this.score, 50, 50);
+    
 
     for (const object of this.gameObjects) {
       this.ctx.save();
